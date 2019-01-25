@@ -1,0 +1,21 @@
+body {
+    height: 10000px;
+}
+
+nav{
+    background-image: url('스크린.jpg');
+    background-size: cover;
+    
+}
+
+.subtitle {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    display: flex;
+    justify-content: center;
+
+}
+h3 +hr{
+    border : 1px solid orange;
+    width: 70px
+}

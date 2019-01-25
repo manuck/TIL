@@ -1,0 +1,27 @@
+body {
+    height: 10000px;
+}
+
+header{
+    height: 350px;
+    width : 100%;
+    background-image: url('스크린.jpg');
+    background-size: cover;
+ 
+}
+
+header h2{
+    line-height: 350px;
+    font-family: 'Nanum Pen Script', cursive;
+}
+
+footer{
+    width:100%;
+    background-color: grey;
+    position: fixed;
+    bottom: 0;
+    font-family: 'Indie Flower', cursive;
+    padding-left: 3rem;
+    padding-right: 3rem;
+
+}
