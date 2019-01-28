@@ -19,3 +19,7 @@ h3 +hr{
     border : 1px solid orange;
     width: 70px
 }
+
+.card {
+    height: 5000;
+}
