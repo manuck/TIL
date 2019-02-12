@@ -12,7 +12,7 @@
 >
 > pyenv local : 해당 디렉토리 파이썬 버전 설정
 
-```
+```bash
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
 echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
@@ -40,7 +40,7 @@ python -V
 > 2. virtualenv
 > 3. conda : 데이터사이언스/머신러닝/딥러닝
 
-```
+```bash
 git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
 echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc
 exec "$SHELL"
@@ -69,8 +69,19 @@ pyenv local flask-venv
 
 > c9은 기본적으로 workspace에서 git config가 가입한 이메일로 되어 있기 때문에, github에 커밋 기록을 제대로 남기기 위해서 설정해준다.
 
+```bash
+git config --global user.name manuck
+git config --global user.email snc9000@naver.com
 ```
-git config --global user.name ________
-git config --global user.email _______
+
+---
+
+## Django
+
+```
+pyenv virtualenv django-venv
+pyenv local django-venv
+
+django-admin startproject #django_intro(프로젝트 이름)
 ```
 
