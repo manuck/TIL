@@ -208,10 +208,209 @@ urlpatterns = [
 12. `views.py` (logout)
 
     ```python
+    @login_required
     def logout(request):
         auth_logout(request)
         return redirect('boards:index')
-    ```
-
     
+    ```
+---
+# 190409
 
+1. `urls.py`(accounts)
+
+   ```python
+       path('delete/', views.delete, name='delete'),
+       path('update/', views.update, name='update'),
+       path('password/', views.password, name='password'),
+   ```
+
+2. `views.py`(accounts)
+
+   ```python
+   @login_required
+   def logout(request):
+       auth_logout(request)
+       return redirect('boards:index')
+   
+   @login_required
+   @require_http_methods(["POST"])
+   def delete(request):
+       request.user.delete()
+       return redirect('boards:index')
+   
+   # @login_required
+   # def delete(request):
+   #     if request.method == 'POST':
+   #         request.user.delete()
+   #     return redirect('boards:index')
+   
+   @require_http_methods(["GET", "POST"])
+   def update(request):
+       # user_form = UserChangeForm()
+       if request.method == 'POST':
+           user_form = UserCustomChangeForm(request.POST, instance=request.user)
+           if user_form.is_valid():
+               user_form.save()
+               return redirect('boards:index')
+       else:
+           user_form = UserCustomChangeForm()
+       context = {'user_form':user_form}
+       return render(request, 'accounts/update.html', context)
+       
+   @login_required
+   def password(request):
+       if request.method == 'POST':
+           user_form = PasswordChangeForm(request.user, request.POST) # 순서 주의!
+           if user_form.is_valid():
+               user = user_form.save()
+               update_session_auth_hash(request, user)
+               return redirect('boards:index')
+       else:
+           user_form = PasswordChangeForm(request.user) # instance= 아님 주의!
+       context = {'user_form':user_form}
+       return render(request, 'accounts/update.html', context)
+   ```
+
+3. `accounts`에 `forms.py` 생성
+
+   ```python
+   from django import forms
+   from django.contrib.auth import get_user_model
+   from django.contrib.auth.forms import UserChangeForm
+   # class UserForm(forms.ModelForm):
+   #     class Meta:
+   #         model = get_user_model()
+   #         # fields = '__all__'
+   #         fields = ['username', 'password']
+   
+   class UserCustomChangeForm(UserChangeForm):
+       class Meta:
+           model = get_user_model()
+           fields = ['email', 'first_name', 'last_name',]
+   
+   ```
+
+4. `update.html`생성
+
+   ```python
+   {% extends 'boards/base.html' %}
+   {% block body %}
+   {% load crispy_forms_tags %}
+   <form method="POST">
+       {% csrf_token %}
+       {{ user_form|crispy }}
+       <input type='submit' value="프로필 수정">
+   </form>
+   {% endblock %}
+   ```
+
+5. `boards`에서 `base.html` 에 추가
+
+   ```html
+   <a href="{% url 'accounts:update' %}">프로필수정</a>
+           <!--<a href="{% url 'accounts:delete' %}">회원탈퇴</a>-->
+           <form action="{% url 'accounts:delete' %}" method="POST" onsubmit="return confirm('탈퇴할꺼야?')">
+               {% csrf_token %}
+               <input type="submit" value="회원탈퇴">
+           </form>
+   ```
+
+>1 : N 
+>
+>user : board
+
+---
+
+1. `boards`에서 `models.py`수정
+
+   ```python
+   # from django.contrib.auth.models import User # 사용하지 마세요
+   # from django.contrib.auth import get_user_model 
+   from django.conf import settings
+   # settings.AUTH_USER_MODEL
+   
+   # Create your models here.
+   class Board(models.Model):
+       # 아래코드 추가
+       user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+   ```
+
+2. `boards`에서 `views.py` 수정
+
+   ```python
+   @login_required
+   def create(request):
+       # if not request.user.is_authenticated:
+       #     return redirect('boards:index')
+       
+       if request.method == 'POST':
+           board_form = BoardForm(request.POST)
+           if board_form.is_valid():
+               # title = board_form.cleaned_data.get('title')
+               # content = board_form.cleaned_data.get('content')
+               # board = Board(title=title, content=content)
+               # board.user = request.user
+               # board.save()
+               board = board_form.save(commit=False)
+               board.user = request.user
+               board.save()
+               return redirect(board)
+       else:
+           board_form = BoardForm()
+       context = {'board_form': board_form}
+       return render(request, 'boards/form.html', context)
+   ```
+
+3. migration과 migrate 다시하기
+
+   ```bash
+   $ python manage.py makemigrations
+   ```
+
+   이미 있는 db와 달라서 질문이 들어온다
+
+   ```bash
+   You are trying to add a non-nullable field 'user' to board without a default; we can't do that (the database needs something to populate existing rows).
+   Please select a fix:
+    1) Provide a one-off default now (will be set on all existing rows with a null value for this column)
+    2) Quit, and let me add a default in models.py
+    
+   Select an option: 1
+   
+   Please enter the default value now, as valid Python
+   The datetime and django.utils.timezone modules are available, so you can do e.g. timezone.now
+   Type 'exit' to exit this prompt
+   >>> 
+   Please enter some code, or 'exit' (with no quotes) to exit.
+   >>> 1
+   ```
+
+   ```bash
+   $ python manage.py migrate
+   ```
+
+4. `detail.html` 수정
+
+   ```html
+   {% extends 'boards/base.html' %}
+   
+   {% block body %}
+   <h1>{{ board.pk }}번째 글</h1>
+   <h2>{{ board.title }}</h2>
+   <h3>작성자 : {{ board.user }}</h3>
+   <p>조회수 : {{ board.hit }}</p>
+   <hr>
+   <p>{{ board.content }}</p>
+   <!--작성자와 user와 일치시에만 수정과 삭제가 표시되게 -->
+   {% if board.user == user %}
+   <a href="{% url 'boards:update' board.pk %}"><input type="submit" value="수정"></a>
+   <form action="{% url 'boards:delete' board.pk %}" method="POST">
+       {% csrf_token %}
+       <input type="submit" value="삭제">
+   </form>
+   {% endif %}
+   {% endblock %}
+   ```
+
+   
