@@ -272,7 +272,7 @@ urlpatterns = [
        return render(request, 'accounts/update.html', context)
    ```
 
-3. `accounts`에 `forms.py` 생성
+3. `accounts`에 `forms.py` 생성 (커스텀으로 클래스 생성)
 
    ```python
    from django import forms
@@ -413,4 +413,91 @@ urlpatterns = [
    {% endblock %}
    ```
 
+---
+
+# 190410
+
+| Django             |              |           |
+| ------------------ | ------------ | --------- |
+| UserCreationForm   | 회원가입     | ModelForm |
+| AuthenticationForm | 로그인       | Form      |
+| UserChangeForm     | 회원변경     | ModelForm |
+| PasswordChangeForm | 비밀번호변경 | Form      |
+
+---
+### 별도 추가(프로필 사진 추가)
+
+`base.html`에서 
+
+```html
+<!-- 탁희쌤 프로필 사진 150 사이즈 -->
+<img src="https://s.gravatar.com/avatar/d0e53a9a9bbc9cf481144a929930f41c?s=150">
+```
+
+
+
+---
+회원가입에서 email 추가
+
+1. `accounts`에서 `forms.py` 추가
+
+   ```python
+   from django.contrib.auth.forms import UserChangeForm, UserCreationForm
    
+   class UserCustomCreationForm(UserCreationForm):
+       class Meta:
+           model = get_user_model()
+           fields = ['username', 'password1', 'password2', 'email']
+   ```
+
+2. `views.py`에서 signup 수정
+
+   ```python
+   from .forms import UserCustomChangeForm, UserCustomCreationForm
+   
+   @require_http_methods(["GET", "POST"])
+   def signup(request):
+       if request.user.is_authenticated:
+           return redirect('boards:index')
+       if request.method == "POST":
+           # UserCreationForm(request.POST)에서 변경
+           user_form = UserCustomCreationForm(request.POST)
+           if user_form.is_valid():
+               user = user_form.save()
+               auth_login(request, user)
+               return redirect('boards:index')
+       else:
+           # UserCustomCreationForm(request.POST)에서 변경
+           user_form = UserCustomCreationForm()
+       context = {"user_form": user_form}
+       return render(request, 'accounts/signup.html', context)
+   ```
+
+---
+
+프로필 사진 추가
+
+1. `accounts`에서 `templatetags` 폴더 생성 후 안에 `gravatar.py` 생성
+
+   ```python
+   import hashlib
+   # 장고의 템플릿 내놔
+   from django import template
+   from django.template.defaultfilters import stringfilter
+   
+   # 템플릿 라이브러리 가져와
+   register = template.Library()
+   
+   # 필터로 makehash 함수를 추가해
+   @register.filter
+   @stringfilter
+   def makehash(email):
+       return hashlib.md5(email.strip().lower().encode('utf-8')).hexdigest()
+   ```
+
+2. `base.html` 수정
+
+   ```html
+   {% load gravatar %}
+           <img src="https://s.gravatar.com/avatar/{{ user.email|makehash }}?s=150&d=https://stickershop.line-scdn.net/stickershop/v1/product/8542/LINEStorePC/main.png;compress=true">
+   ```
