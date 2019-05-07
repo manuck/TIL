@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        img {
+            width: 300px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>댕댕이 {{ dogCount }}마리</h1>
+        <button v-on:click="getDogImage">댕댕이</button>
+        <img v-for="image in images" v-bind:src="image">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        const getDogImage = function() {
+            axios.get('https://dog.ceo/api/breeds/image/random')
+            .then(response =>{
+                this.images.push(response.data.message)
+                this.dogCount += 1  
+            })
+        }
+        const app = new Vue({
+            el: '#app',
+            data: {
+                images: [],
+                dogCount: 0
+            },
+            methods: {
+                getDogImage
+            }
+        })
+    </script>
+</body>
+</html>

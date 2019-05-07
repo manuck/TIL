@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .completed {
+            text-decoration: line-through;
+            color: rosybrown;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- v-model : data의 newTodo 값이 사용자가 입력하는 값으로 변경됨. -->
+        <input type="text" v-model="newTodo" v-on:keyup.enter="addNewTodo"><br>
+        {{newTodo}}
+        <button @click="allCompleted">All completed</button>
+        <select v-model="status">
+            <option value="all">모두보기</option>
+            <option value="completed">완료</option>
+            <option value="active">할 일</option>
+        </select>
+        <ul>
+            <!-- v-for가 우선, v-if가 나중 -->
+            <!-- <li v-for="todo in todoList" v-if="!todo.completed"> -->
+            <li v-for="todo in todoListByStatus()" v-bind:key="todo.id">
+                <input type="checkbox" v-model="todo.completed">
+                <span v-bind:class="{completed: todo.completed}">{{ todo.content }}</span>
+                <button v-on:click="deleteTodo(todo)">삭제</button>
+                <!-- <button v-on:click="check(todo)">완료</button> -->
+            </li>
+            <!-- <li v-else>
+                <input type="checkbox" v-model="todo.completed">
+                <del>{{todo.content}}</del>의 completed가 트루인것이에요
+                <button v-on:click="check(todo)">취소</button>
+            </li> -->
+        </ul>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        const STORAGE_KEY = 'vue-todo-list'
+        const todoStorage = {
+            fetch: function(todo) {
+                const todoList = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+                todoList.forEach(function(todo, index){
+                    todo.id = index
+                    todoList.uid = index
+                })
+                return todoList
+            },
+            save: function(todoList) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(todoList))
+            }
+        }
+
+        const app = new Vue({
+            el: '#app',
+            data: {
+                newTodo: '',
+                status: 'all',
+                todoList: todoStorage.fetch()
+            },
+            methods: {
+                check: function(todo){
+                    todo.completed = !todo.completed
+                },
+                // check: function(todo){
+                //     todo.completed = true
+                // },
+                // notcheck: function(todo){
+                //     todo.completed = false
+                // }
+                addNewTodo: function(){
+                    // this : vue 오브젝트(app)
+                    // this.todoLis : data의 todoList
+                    if (this.newTodo) {
+                        this.todoList.push({
+                            // this.newTodo : data의 newTodo (사용자가 입력을 한 값)
+                            id: ++this.todoList.uid,
+                            content: this.newTodo,
+                            completed: false
+                        })
+                        this.newTodo = ''
+                    }
+                },
+                deleteTodo: function(todo) {
+                    this.todoList.splice(this.todoList.indexOf(todo), 1)
+                },
+                allCompleted: function(){
+                    this.todoList.forEach(function(todo){
+                        todo.completed = true
+                    })
+                    // this.todoList.forEach(todo => {
+                    //     if(!todo.completed){
+                    //         this.check(todo)
+                    //     }
+                    // })
+                },
+                todoListByStatus: function() {
+                    // status가 completed라면,
+                    // completed가 true만 리턴
+                    if(this.status === 'completed') {
+                        return this.todoList.filter((todo) => todo.completed)
+                    }
+                    // 각각을 확인하면서 status가 active라면
+                    // completed가 false인 것만 리턴
+                    else if(this.status === 'active') {
+                        return this.todoList.filter((todo) => !todo.completed)
+                    }
+                    // all이면
+                    // 그대로 리턴
+                    else {
+                        return this.todoList
+                    }
+                }
+            },
+            watch: {
+                todoList: {
+                    handler: function() {
+                    // 로컬 스토리지에 저장하겠습니다.
+                    todoStorage.save(this.todoList)
+                    },
+                    deep: true
+                    // deep true가 없다면, 단순히 해당하는 오브젝트([])에 값이 추가되거나 삭제 되는 경우만 watch
+                    // deep true 옵션을 통해 오브젝트([]) 안에 있는 오브젝트(nested object)의 변경 사항까지 watch
+                }
+            }
+        })
+
+    </script>
+</body>
+</html>

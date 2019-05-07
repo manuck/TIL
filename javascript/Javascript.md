@@ -427,7 +427,38 @@ console.log(numberEach([10,20,30], function(number, result=0){
 
    
 
+## 190507 추가사항(형변환)
 
+1. NaN (Not a Number)
+
+   ```javascript
+   typeof NaN => number
+   NaN === NaN => false
+   isNaN('123') => false
+   isNaN('asd') => true
+   ```
+
+2. typeof typeof
+
+   ```javascript
+   typeof typeof '123' => "string"
+   ```
+
+3. string +(*) int
+
+   ```javascript
+   1 + '1' => "11"
+   2 * '12' => 24
+   ```
+
+4. 기타
+
+   ```javascript
+   parseInt('123') => 123
+   Sring(2) => "2"
+   ```
+
+   
 
 
 
